@@ -97,6 +97,20 @@ function utf8ToBinaryString(str) {
   return binstr;
 }
 
+/* From Dev Mozilla */
+
+function b64EncodeUnicode(str) {
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+        return String.fromCharCode('0x' + p1);
+    }));
+}
+
+function b64DecodeUnicode(str) {
+    return decodeURIComponent(atob(str).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+}
+
 /* Management and interactions  */
 
 function checkParameters(){
@@ -208,7 +222,7 @@ webcrypto.subtle.generateKey(
 }
 
 function encryptThis() {
-        clearText=document.getElementById("editor").value;
+        clearText=b64EncodeUnicode(document.getElementById("editor").value);
         var buffer = utf8ToBuffer(clearText);
         theiv=webcrypto.getRandomValues(new Uint8Array(16));
         webcrypto.subtle.encrypt(
@@ -259,7 +273,7 @@ function decryptThis() {
         .then(function(decrypted){
     //returns an ArrayBuffer containing the decrypted data
                 clearText=atob(bufferToBase64(new Uint8Array(decrypted)));
-                document.write(clearText);
+                document.write(b64DecodeUnicode(clearText));
         document.close();
         })
         .catch(function(err){
