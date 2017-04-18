@@ -18,6 +18,7 @@ Steps :
 5. Get the ID of the gist and press the "generate site" button
 6. The site is now available at this URL
 
+
 */
 var webcrypto = window.crypto || window.msCrypto || window.webkitCrypto || window.mozCrypto;
 var mykey;
@@ -99,6 +100,8 @@ function utf8ToBinaryString(str) {
 
 /* From Dev Mozilla */
 
+  // Surely we have a double encode here, bAAD for perfs
+
 function b64EncodeUnicode(str) {
     return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) {
         return String.fromCharCode('0x' + p1);
@@ -114,9 +117,9 @@ function b64DecodeUnicode(str) {
 /* Management and interactions  */
 
 function checkParameters(){
-        var regex=/^[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-]{22}$/
-        var regexIV=/^[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789+/=]{22}$/
-        var regexG=/^[abcdef0123456789]{32}$/
+        var regex=/^[a-zA-Z0-9_-]{22}$/
+        var regexIV=/^[a-zA-Z0-9+/=]{22}$/
+        var regexG=/^[a-f0-9]{32}$/
         k=getHashVariable("k");
         iv=getHashVariable("iv");
         g=getHashVariable("g");
@@ -165,12 +168,27 @@ function generateURL() {
         document.getElementById("finalURL").href=url;
 }
 
+
+function readFile(event) {
+    var reader  = new FileReader();
+
+    reader.addEventListener("load", function () {
+       document.getElementById("editor").value = '<a href="'+reader.result+'">get file</a>';
+    }, false);
+
+    if (this.files[0]) {
+      reader.readAsDataURL(this.files[0]);
+    }
+}
+
 /* Main Entry */
 
 window.onload = function (){
         document.getElementById("editor").focus();
         document.getElementById("encrypt").onclick = encryptThis;
         document.getElementById("gid").onchange = generateURL;
+        document.getElementById("file").addEventListener("change",
+        readFile, false);
         if (window.location.hash != "") {
                 initDecryption();
         }
@@ -246,6 +264,8 @@ function encryptThis() {
                 .then(function(keydata){
                         theKey=keydata.k;
                         theIV=bufferToBase64(theiv);
+                        // copy encrypted text to clipboard
+                        document.getElementById("editor").select();
                         document.getElementById("gistlink").style.visibility="visible";
                 })
                 .catch(function(err){
@@ -291,6 +311,7 @@ function decryptThis() {
 <body>
 <div id="encryptor" style="visibility:hidden;">
 <textarea id="editor" cols="50" rows="5" placeholder="Put data to be encrypted here"></textarea><br/>
+or pick a file : <input type="file" id="file" name="file"><br/>
 <input type="button" value="encrypt" id="encrypt"><br/>
 <span id="gistlink" style="visibility:hidden;">
           Copy this encrypted text to a Gist :
